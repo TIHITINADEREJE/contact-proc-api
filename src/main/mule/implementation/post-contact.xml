@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<flow name="post-contactFlow" doc:id="c61452fa-4da2-4105-8416-5af7a8cc266b" >
+		<logger level="INFO" doc:name="Logger" doc:id="4af60146-a74e-4dd7-ac50-924b126810bd" />
+		<ee:transform doc:name="Transform Message" doc:id="574a119c-0e2c-47c5-a4e0-4ff2d8883b43">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+vars.orgPayload map (data, index) ->
+{
+	"First Name": data."First Name",
+	"Last Name" : data."Last Name",
+    "Account Name": lookup('lookupFlow', {AccountId : payload},10000000),
+    "Title": data.Title,
+    "Phone": data.Phone,
+    "Id" : data.Id,
+    "Email" : data.Email
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<choice doc:name="Choice" doc:id="66e84eed-2227-4d5d-b2fa-05c0614dd6f6" >
+			<when expression='#[payload[0]."Account Name" != "No account found"]'>
+				<http:request method="POST" doc:name="contact-sys-api" doc:id="ba5d680d-3289-4b3b-bb3c-e79e97686311" url="http://localhost:8081/api/contact" config-ref="contact_sys_api_request_configuration" responseTimeout="#[10000000000000]">
+			<http:headers><![CDATA[#[output application/java
+---
+{
+	client_secret : 123,
+	client_id : 123
+}]]]></http:headers>
+		</http:request>
+				<logger level="INFO" doc:name="Logger" doc:id="4b40bb29-835d-40d4-9001-79beb2da1984" message="#[payload]" />
+				<ee:transform doc:name="Transform Message" doc:id="863a8862-09f8-47bd-86a0-53fd787b4f85">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+if ((payload.created is true) and payload.success is true) {message : "Item successfully created",
+  Id : payload[0].Id
+} 
+else if ((payload.created is false) and payload.success is true) {message : "Item successfully updated",
+  Id : payload[0].Id
+} 
+else {message : payload[0].errors}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="statusCode"><![CDATA[%dw 2.0
+output application/java
+var response = payload.items[0]
+---
+if ((response.payload.created is true) and response.payload.success is true) 201 
+else if ((response.payload.created is false) and response.payload.success is true) 200
+else 500 ]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Transform Message" doc:id="0c31c597-40b1-40d2-baba-e2e4fecfd819" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+"No account found"]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+	</flow>
+</mule>

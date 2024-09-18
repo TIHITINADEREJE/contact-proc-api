@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ">
+    <flow name="proc-api-contact-main">
+        <http:listener config-ref="proc-api-contact-httpListenerConfig" path="/api/*">
+            <http:response statusCode="#[vars.statusCode default 200]">
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+        <logger level="INFO" doc:name="Start logger" doc:id="fff691d1-69c9-4f47-adc7-6537ecd91d9c" message="Start logger"/>
+		<apikit:router config-ref="proc-api-contact-config" />
+		<error-handler ref="globalErrorHandler" />
+    </flow>
+    <flow name="proc-api-contact-console">
+        <http:listener config-ref="proc-api-contact-httpListenerConfig" path="/console/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:console config-ref="proc-api-contact-config" />
+		<error-handler ref="globalErrorHandler" />
+    </flow>
+	<flow name="get:\contact:proc-api-contact-config">
+		<flow-ref doc:name="Flow Reference" doc:id="5303bc6b-158b-49e8-be27-a24128e5956c" name="get-contactFlow"/>
+    </flow>
+    <flow name="post:\contact:application\json:proc-api-contact-config">
+		<ee:transform doc:name="Transform Message" doc:id="88a3e9cd-4b66-4bed-9d0d-d44a7bfd2f4f">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="orgPayload"><![CDATA[payload]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Flow Reference" doc:id="b85dc5c3-68bb-46ad-bb4b-52afd5d86326" name="post-contactFlow"/>
+    </flow>
+</mule>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<flow name="get-contactFlow" doc:id="8e6afabe-7d04-4b08-9a0e-a0cbf3946f1d" >
+		<logger level="INFO" doc:name="Before request" doc:id="baf668d4-13da-4758-8316-71fe5ccf3339" message="Before request"/>
+		<http:request method="GET" doc:name="contact-sys-api" doc:id="cdf52e53-026a-4e7d-8f99-3faea938fad6" config-ref="contact_sys_api_request_configuration" url="http://localhost:8081/api/contact"/>
+		<logger level="INFO" doc:name="After request" doc:id="732c41b0-fc39-4679-9e13-0d072cda2977" message="After request"/>
+	</flow>
+</mule>
